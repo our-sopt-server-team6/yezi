@@ -4,6 +4,7 @@ let User = require('../models/user');
 let responseMessage = require('../modules/responseMessage');
 let statusCode = require('../modules/statusCode');
 let util = require('../modules/util');
+let encryption = require('../modules/encryption');
 
 /* GET users listing. */
 router.post('/signup',async(req, res)=>{
@@ -14,8 +15,11 @@ router.post('/signup',async(req, res)=>{
   if (User.filter(user => user.id == id).length >0){
     return res.status(400).send({message: 'ALREADY ID'});
   } 
-  User.push({id, name, password, email});
-  res.status(200).send(User);
+
+  const salt = encryption.encryptWithSalt();
+  const hashed = encryption.encrypt(password.salt)
+  User.push({id, name, password,salt, hashed, email});
+  res.status(200).send(User)
 });
 
 router.post('/signin', async(req, res)=>{
@@ -26,16 +30,19 @@ router.post('/signin', async(req, res)=>{
     return res.status(400).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NULL_VALE));
   }
   //존재하는 id인지(없다면 no user)
-  if(User.filter(user => user.id == id).length ==0){
+  const user = User.filter(user = user.id == id);
+  if(User.length ==0){
     return res.status(400).send(util.fail(statusCode.BAD_REQUEST, responseMessage.NO_USER));
   }
   //비밀번호 확인(없다면 miss match password)
-  if(User.filter(user => user.id == id)[0].password != password){
+  if(user[0].password != encryption.encrypt(password, user[0].salt)){
     return res.status(400).send(util.fail(statusCode.BAD_REQUEST, responseMessage.MISS_MATCH_PASSWORD));
   }
   //성공 (login success + userId)
   console.log('login success');
   return res.status(200).send(util.success(statusCode.OK, responseMessage.LOGIN_SUCCESS, {userId: id}));
+
+
 })
 
 router.get('/profile/:id', async (req, res)=>{
