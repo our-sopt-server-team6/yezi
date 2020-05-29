@@ -66,7 +66,7 @@ router.put('/:id', async(req, res)=>{
             .send(util.fail(statusCode.OK, responseMessage.NO_POST));
     }
     var time = moment();
-    const createdAt = await now.format('yyyy-mm-dd');
+    const createdAt = await time.format('yyyy-mm-dd');
     const result = Post.updatePostById(id,  update_author,update_title,update_content, createdAt);
     res.status(statusCode.ok)
         .send(util.success(statusCode.OK, responseMessage.UPDATE_POST_SUCCESS, result));
